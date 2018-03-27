@@ -1,5 +1,6 @@
 # blockchain-cli
-Blockchain command line test
+- Blockchain command line test
+- This work well with nodejs verion 4.2.2
 
 # Install
 - sudo npm install
