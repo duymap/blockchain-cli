@@ -33,12 +33,14 @@ E.g: blockchain generate-bch B, it will generate non-segwit bitcoin address stor
 blockchain move-bch <filename>.priv <toAddress>
 ```
 - **\<toAddress\>**: segwit address string
-- **\<filename.priv\>**: file store private key of non-sewgit address
+- **\<filename\>.priv**: file store private key of non-sewgit address
+
 This used to transfer all btc from non-segwit address to segwit address, the amount sent is (balance - fee)
 
 ```
 blockchain move-segwit-bch <filename>.priv <toAddress>
 ```
-*toAddress*: non-segwit address string
-*filename*.priv: file store private key of sewgit address
+- **\<toAddress\>**: non-segwit address string
+- **\<filename\>.priv**: file store private key of sewgit address
+
 This used to transfer all btc from segwit address to non-segwit address, the amount sent is (balance - fee)
