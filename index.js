@@ -86,7 +86,7 @@ function generateNonSegwit(fileName) {
     console.log(address);
 }
 
-/// param1: private key file name of from address
+// param1: private key file name of from address
 // param 2: string of segwit address 
 function moveBCH(param1, param2) {
     // function moveBCH() {
@@ -155,7 +155,7 @@ function sendBTC(signPrivateKey, fromAddress, toAddress, amount) {
           tx.serialize();
       
           insight.broadcast(tx, function(error, transactionId) {
-           
+            console.log('txid:' + transactionId);
           });
       }
     });
