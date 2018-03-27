@@ -6,11 +6,11 @@
 - sudo npm install
 
 If above installation does not work , please try the following:
-sudo npm install bitcore-lib --save
-sudo npm install bitcore-explorers --save
+- sudo npm install bitcore-lib --save
+- sudo npm install bitcore-explorers --save
 
 Then install the command to use:
-sudo npm install -g
+- sudo npm install -g
 
 # Usage
 blockchain generate-segwit <filename>
