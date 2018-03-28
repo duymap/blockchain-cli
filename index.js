@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 var bitcore = require('bitcore-lib');
+var bitcoin = require('bitcoinjs-lib');
 var program = require('commander');
+var bs58check = require('bs58check');
 var Insight = require("bitcore-explorers").Insight;
 var insight = new Insight('testnet');
 var fs = require('fs');
@@ -30,7 +32,7 @@ if (typeof cmdValue === 'undefined') {
 
 switch (cmdValue) {
     case GENERATE_SEGWIT:
-        generateSegwit(paramValue1);
+        generateSegwitP2SH(paramValue1);
         break;
     case GENERATE_BCH:
         generateNonSegwit(paramValue1);
@@ -46,26 +48,30 @@ switch (cmdValue) {
         break;
 }
 
-function generateSegwit(fileName) {
+function generateNativeSegwit(fileName) {
+    console.log(rng);
+    var keyPair = bitcoin.ECPair.makeRandom({ network: bitcoin.networks.testnet });
+    var publicKey = keyPair.getPublicKeyBuffer();
+    var scriptPublicKey = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(publicKey));
+    var address = bitcoin.address.fromOutputScript(scriptPublicKey);
+    console.log(address.toString());
+}
+
+function generateSegwitP2SH(fileName) {
 
     if (typeof fileName === 'undefined') {
         console.error('No fileName param found');
         return;
     }
 
-    console.log('Generate Segwit...(P2SH) Address');
-    var privateKeys = [];
-    var privateKeysStore = [];
-    for (var i=0; i < 2; i++) {
-        var randBuffer = bitcore.crypto.Random.getRandomBuffer(32);
-        var randNumer = bitcore.crypto.BN.fromBuffer(randBuffer);
-        var key = bitcore.PrivateKey(randNumer);
-        privateKeys.push(key);
-        privateKeysStore.push(key.toString());
-    }
-    writeFile(fileName + '.priv', privateKeysStore.join(','));
-    var publicKeys = privateKeys.map(bitcore.PublicKey);
-    var address = new bitcore.Address(publicKeys, 2, 'testnet'); // 2 of 2
+    console.log('Generate Segwit (P2SH) Address');
+    var keyPair = bitcoin.ECPair.makeRandom({network: bitcoin.networks.testnet});
+    writeFile(fileName + '.priv', keyPair.toWIF());
+    
+    var redeemScript = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(keyPair.getPublicKeyBuffer()))
+    var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript))
+    var address = bitcoin.address.fromOutputScript(scriptPubKey)
+    depositSomeBCHForTesting(address);
     console.log('=========== Segwit address: ============');
     console.log(address);
 }
@@ -82,6 +88,7 @@ function generateNonSegwit(fileName) {
     console.log(privateKey.toString());
     writeFile(fileName + '.priv', privateKey.toString());
     var address = privateKey.toAddress('testnet');
+    depositSomeBCHForTesting(address);
     console.log('=========== Non-Segwit address: ============');
     console.log(address);
 }
@@ -169,3 +176,28 @@ function writeFile(fileName, data) {
         console.log(fileName + " was saved!");
     }); 
 }
+
+// used for testing
+function depositSomeBCHForTesting(toAddress) {
+    // deposit 0.05BTC for testing
+    var privateKeyWIF = 'cQN511BWtc2dSUMWySmZpr6ShY1un4WK42JegGwkSFX5a8n9GWr3';
+    var privateKey = bitcore.PrivateKey.fromWIF(privateKeyWIF);
+    var sourceAddress = bitcore.Address.fromString('mibK5jk9eP7EkLH175RSPGTLR27zphvvxa');
+    insight.getUnspentUtxos(sourceAddress, function(error, utxos) {
+        if (error) {
+          console.log(error);
+        } else {
+          var tx = new bitcore.Transaction();
+          tx.from(utxos);
+          tx.to(toAddress, 10000000);
+          tx.change(sourceAddress);
+          tx.sign(privateKey);
+          tx.serialize();
+      
+          insight.broadcast(tx, function(error, transactionId) {
+           console.log('tx:' + transactionId);
+          });
+      }
+    });
+}
+
