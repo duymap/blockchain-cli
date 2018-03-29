@@ -17,6 +17,7 @@
   "dependencies": {
     "bitcoinjs-lib": "^3.3.2",
     "bitcore-explorers": "^1.0.1",
-    "bitcore-lib": "^0.13.19"
+    "bitcore-lib": "^0.13.19",
+    "dhttp": "^2.4.2"
   }
 }

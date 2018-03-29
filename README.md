@@ -1,6 +1,6 @@
 # blockchain-cli
-- Blockchain command line test
-- This work well with nodejs verion 4.2.2
+- Blockchain command line test for study
+- This work well with nodejs 6.x
 
 # Install
 ```

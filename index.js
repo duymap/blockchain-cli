@@ -6,6 +6,8 @@ var bs58check = require('bs58check');
 var Insight = require("bitcore-explorers").Insight;
 var insight = new Insight('testnet');
 var fs = require('fs');
+var regtestUtils = require('./_regtest');
+var regtest = regtestUtils.network;
 
 const GENERATE_SEGWIT = 'generate-segwit';
 const GENERATE_BCH = 'generate-bch';
@@ -48,8 +50,9 @@ switch (cmdValue) {
         break;
 }
 
+// bench32 format
 function generateNativeSegwit(fileName) {
-    console.log(rng);
+    //console.log(rng);
     var keyPair = bitcoin.ECPair.makeRandom({ network: bitcoin.networks.testnet });
     var publicKey = keyPair.getPublicKeyBuffer();
     var scriptPublicKey = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(publicKey));
@@ -66,13 +69,13 @@ function generateSegwitP2SH(fileName) {
 
     console.log('Generate Segwit (P2SH) Address');
     var keyPair = bitcoin.ECPair.makeRandom({network: bitcoin.networks.testnet});
-    writeFile(fileName + '.priv', keyPair.toWIF());
+    // writeFile(fileName + '.priv', keyPair.toWIF());
     
     var redeemScript = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(keyPair.getPublicKeyBuffer()))
     var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript))
-    var address = bitcoin.address.fromOutputScript(scriptPubKey)
-    depositSomeBCHForTesting(address);
-    console.log('=========== Segwit address: ============');
+    var address = bitcoin.address.fromOutputScript(scriptPubKey, bitcoin.networks.testnet);
+    // depositSomeBCHForTesting(address);
+    console.log('=========== Segwit P2SH address: ============');
     console.log(address);
 }
 
@@ -117,36 +120,71 @@ function moveBCH(param1, param2) {
 }
 
 function moveSegwitBCH(param1, param2) {
-    var fee = 6000;
+    // var fee = 6000;
     var buffer = fs.readFileSync(param1);
-    var privateKeys = [];
-    // restore address from private keys
-    var keys = buffer.toString().split(",");
-    keys.forEach(function(e) {
-        privateKeys.push(bitcore.PrivateKey.fromString(e.toString()));
-    })
-
-    var publicKeys = privateKeys.map(bitcore.PublicKey);
-    var fromAddress = new bitcore.Address(publicKeys, 2, 'testnet');
+    var keyPair = bitcoin.ECPair.fromWIF(buffer.toString(), bitcoin.networks.testnet);
+    var redeemScript = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(keyPair.getPublicKeyBuffer()))
+    var scriptPubKey = bitcoin.script.scriptHash.output.encode(bitcoin.crypto.hash160(redeemScript));
+    var address = bitcoin.address.fromOutputScript(scriptPubKey, bitcoin.networks.testnet);
+    var fromAddress = bitcore.Address.fromString(address);
     var toAddress = bitcore.Address.fromString(param2.toString());
-    insight.getUnspentUtxos(fromAddress, function(error, utxos) {
-        var balance = 0;
-        for (var i = 0; i < utxos.length; i++) {
-            balance +=utxos[i]['satoshis'];
-        }
-        var sendAmount = balance - fee;
-        console.log('current balance:' + balance);                
-        console.log('Amount to send:' + sendAmount);
-        
-        var tx = new bitcore.Transaction();
-            tx.from(utxos, publicKeys, 2);
-            tx.to(toAddress, sendAmount)
-            tx.sign(privateKeys);
-            tx.serialize();
-        insight.broadcast(tx, function(error, transactionId) {
-            console.log('txID: ' + transactionId);
-        });
-    });
+    // insight.getUnspentUtxos(fromAddress, function(error, utxos) {
+       // console.log(utxos);
+        // var balance = 0;
+        // for (var i = 0; i < utxos.length; i++) {
+        //     balance +=utxos[i]['satoshis'];
+        // }
+        // var sendAmount = balance - fee;
+        // console.log('current balance:' + balance);                
+        // console.log('Amount to send:' + sendAmount);
+       
+    // });
+
+    var txb = new bitcoin.TransactionBuilder(bitcoin.networks.testnet);
+    
+    txb.addInput('ac97df66199c5c292943d365a7e8da8020edd0a9648e36789b441f9e6b934088', 1);
+    txb.addOutput(toAddress.toString(), 5000);
+    txb.sign(0, keyPair, redeemScript, null, 20000);
+    txb = txb.build();
+    console.log(txb.getId());
+    console.log(txb.toHex());
+
+    // var keyPair = bitcoin.ECPair.fromWIF('cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA', regtest)
+    // var pubKey = keyPair.getPublicKeyBuffer()
+    // var pubKeyHash = bitcoin.crypto.hash160(pubKey)
+
+    // var redeemScript = bitcoin.script.witnessPubKeyHash.output.encode(pubKeyHash)
+    // var redeemScriptHash = bitcoin.crypto.hash160(redeemScript)
+    // var scriptPubKey = bitcoin.script.scriptHash.output.encode(redeemScriptHash)
+    // var address = bitcoin.address.fromOutputScript(scriptPubKey, regtest)
+
+    // regtestUtils.getUnspent(address, function (err, unspent) {
+    //   if (err) console.log(err);
+    //   console.log('result: ' + unspent);
+
+    //   var txb = new bitcoin.TransactionBuilder(regtest)
+    //   txb.addInput(unspent.txId, unspent.vout)
+    //   txb.addOutput(toAddress, 2e4)
+    //   txb.sign(0, keyPair, redeemScript, null, unspent.value)
+    //   console.log(unspent.txId);
+    //   console.log(unspent.vout);
+    //   console.log(unspent.value);
+    //   var tx = txb.build()
+    //   console.log(tx.toHex());
+    //   // build and broadcast to the Bitcoin RegTest network
+    //   regtestUtils.broadcast(tx.toHex(), function (err) {
+    //     if (err) console.log(err);
+
+    //     regtestUtils.verify({
+    //       txId: tx.getId(),
+    //       address: regtestUtils.RANDOM_ADDRESS,
+    //       vout: 0,
+    //       value: 2e4
+    //     }, function(out) {
+    //         console.log(out);
+    //     });
+    //   })
+    // })
 }
 
 function sendBTC(signPrivateKey, fromAddress, toAddress, amount) {
