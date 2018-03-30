@@ -120,7 +120,6 @@ function moveBCH(param1, param2) {
 }
 
 function moveSegwitBCH(param1, param2) {
-    // var fee = 6000;
     var buffer = fs.readFileSync(param1);
     var keyPair = bitcoin.ECPair.fromWIF(buffer.toString(), bitcoin.networks.testnet);
     var redeemScript = bitcoin.script.witnessPubKeyHash.output.encode(bitcoin.crypto.hash160(keyPair.getPublicKeyBuffer()))
@@ -128,18 +127,6 @@ function moveSegwitBCH(param1, param2) {
     var address = bitcoin.address.fromOutputScript(scriptPubKey, bitcoin.networks.testnet);
     var fromAddress = bitcore.Address.fromString(address);
     var toAddress = bitcore.Address.fromString(param2.toString());
-    // insight.getUnspentUtxos(fromAddress, function(error, utxos) {
-       // console.log(utxos);
-        // var balance = 0;
-        // for (var i = 0; i < utxos.length; i++) {
-        //     balance +=utxos[i]['satoshis'];
-        // }
-        // var sendAmount = balance - fee;
-        // console.log('current balance:' + balance);                
-        // console.log('Amount to send:' + sendAmount);
-       
-    // });
-
     var txb = new bitcoin.TransactionBuilder(bitcoin.networks.testnet);
     
     txb.addInput('ac97df66199c5c292943d365a7e8da8020edd0a9648e36789b441f9e6b934088', 1);
@@ -149,6 +136,7 @@ function moveSegwitBCH(param1, param2) {
     console.log(txb.getId());
     console.log(txb.toHex());
 
+    // test with regtest
     // var keyPair = bitcoin.ECPair.fromWIF('cMahea7zqjxrtgAbB7LSGbcQUr1uX1ojuat9jZodMN87JcbXMTcA', regtest)
     // var pubKey = keyPair.getPublicKeyBuffer()
     // var pubKeyHash = bitcoin.crypto.hash160(pubKey)
