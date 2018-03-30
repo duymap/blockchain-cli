@@ -38,7 +38,7 @@ blockchain move-bch <filename>.priv <toAddress>
 This used to transfer all btc from non-segwit address to segwit address, the amount sent is (balance - fee)
 
 ```
-blockchain move-segwit-bch <filename>.priv <toAddress>
+blockchain move-segwit-bch <filename>.priv <toAddress> **( Not work yet )**
 ```
 - **\<toAddress\>**: non-segwit address string
 - **\<filename\>.priv**: file store private key of sewgit address
